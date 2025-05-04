@@ -2,6 +2,10 @@
 
 A decoupled weather application with a Next.js frontend and a Laravel API backend.
 
+A working URL without Laravel configuration
+
+[https://weather-app-two-alpha-73.vercel.app/](https://weather-app-two-alpha-73.vercel.app/)
+
 ## Project Structure
 
 The application consists of two distinct parts:
@@ -11,7 +15,7 @@ The application consists of two distinct parts:
 
 ## Screenshots
 
-![1746386841836](image/README/1746386841836.png)
+![1746396302458](image/README/1746396302458.png)
 
 ## Frontend Setup
 
