@@ -1,82 +1,85 @@
 import { NextResponse } from "next/server";
 
-type WeatherResponse =
-  | {
-      current: {
-        temp: number;
-        humidity: number;
-        wind_speed: number;
-        weather: {
-          description: string;
-          icon: string;
-        }[];
-        dt: number;
-      };
-      daily: {
-        dt: number;
-        temp: {
-          day: number;
-        };
-        weather: {
-          description: string;
-          icon: string;
-        }[];
-      }[];
-      city: string;
-    }
-  | { error: string };
-
-const LARAVEL_API_URL =
-  process.env.LARAVEL_API_URL || "http://localhost:8000/api";
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const BASE_URL = "https://api.openweathermap.org/data/2.5";
+const GEO_URL = "https://api.openweathermap.org/geo/1.0";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const city = searchParams.get("city");
-
   const units = searchParams.get("units") || "metric";
 
   if (!city) {
     return NextResponse.json(
-      { error: "City parameter is required" },
-      { status: 400 }
+      {
+        message: "Validation failed",
+        errors: { city: ["City parameter is required"] },
+      },
+      { status: 422 }
     );
   }
 
-  console.log("fetching weather data for city:", city, "with units:", units);
+  if (units && !["metric", "imperial"].includes(units)) {
+    return NextResponse.json(
+      {
+        message: "Validation failed",
+        errors: { units: ["Units must be either metric or imperial"] },
+      },
+      { status: 422 }
+    );
+  }
+
+  console.log("Fetching weather data for city:", city, "with units:", units);
 
   try {
-    const response = await fetch(
-      `${LARAVEL_API_URL}/weather?city=${encodeURIComponent(
-        city as string
-      )}&units=${units}`
+    // Step 1: Get geo coordinates (latitude, longitude) for the city
+    const geoResponse = await fetch(
+      `${GEO_URL}/direct?q=${encodeURIComponent(
+        city
+      )}&limit=1&appid=${OPENWEATHER_API_KEY}`
     );
 
-    const r = response.status;
-    console.log("Response from Laravel API:", r);
+    const res = await geoResponse.json();
+    if (!geoResponse.ok || res.length === 0) {
+      return NextResponse.json({ message: "City not found" }, { status: 404 });
+    }
 
-    if (!response.ok) {
-      const responseData = await response.text();
-      // Return the error from the backend with the correct status code
+    const geoData = res[0];
+    const lat = geoData.lat;
+    const lon = geoData.lon;
+    const cityName = geoData.name;
+    const country = geoData.country;
+
+    // Step 2: Get weather data using coordinates
+    const weatherResponse = await fetch(
+      `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=${units}&appid=${OPENWEATHER_API_KEY}`
+    );
+
+    if (!weatherResponse.ok) {
       return NextResponse.json(
-        {
-          error: responseData || "Error fetching weather data",
-        },
-        { status: response.status }
+        { message: "Failed to retrieve weather data" },
+        { status: 500 }
       );
     }
 
-    const responseData = await response.json();
+    const weatherData = await weatherResponse.json();
+
+    // Format response data
+    const responseData = {
+      current: weatherData,
+      city: cityName,
+    };
 
     // Return the successful response data
-    return NextResponse.json(
-      { data: responseData as WeatherResponse },
-      { status: 200 }
-    );
+    return NextResponse.json(responseData, { status: 200 });
   } catch (error) {
-    console.error("Error fetching weather data from Laravel backend:", error);
-    // Return an internal server error response
+    console.error("Error fetching weather data:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        message:
+          "An error occurred: " +
+          (error instanceof Error ? error.message : String(error)),
+      },
       { status: 500 }
     );
   }
