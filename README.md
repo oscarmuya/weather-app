@@ -29,7 +29,7 @@ The application consists of two distinct parts:
 
    ```bash
    git clone <repo-url>
-   cd frontend
+   cd weather-app
    ```
 
 2. Install dependencies:
@@ -40,7 +40,7 @@ The application consists of two distinct parts:
    yarn install
    ```
 
-3. Create a `.env.local` file in the `frontend` folder and add the Laravel backend URL:
+3. Create a `.env.local` file in the `weather-app` folder and add the Laravel backend URL:
 
    ```env
    LARAVEL_API_URL=http://localhost:8000/api
@@ -69,7 +69,7 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 1. Navigate to the backend directory:
 
    ```bash
-   cd backend
+   cd weather-backend
    ```
 
 2. Install Composer dependencies:
