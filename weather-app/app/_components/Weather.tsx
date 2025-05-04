@@ -50,11 +50,11 @@ export default function Weather(): React.JSX.Element {
       }
 
       const data = await response.json();
-      const res = await fetchThumbnail(data.city);
-      setFetchedCity(data.city);
+      const res = await fetchThumbnail(data.data.city);
+      setFetchedCity(data.data.city);
       setThumbnail(res);
 
-      const forecastList = data.current.list;
+      const forecastList = data.data.current.list;
       setWeather(forecastList[0]);
       setForecast([forecastList[8], forecastList[16], forecastList[24]]);
     } catch (error) {
